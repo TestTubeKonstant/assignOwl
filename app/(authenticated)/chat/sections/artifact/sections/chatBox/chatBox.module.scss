@@ -41,6 +41,14 @@
   min-width: 0; // Allow flex child to shrink
   overflow: hidden; // Prevent content overflow
 
+  .titleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+
   h3 {
     margin: 0;
     font-size: 1rem;
@@ -49,6 +57,8 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
   }
 
   p {
@@ -249,6 +259,32 @@
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--color-error-background, #fef2f2);
+  border: 1px solid var(--color-error-border, #fecaca);
+  border-left: 3px solid var(--color-error, #ef4444);
+  color: var(--color-error, #ef4444);
+  font-size: 0.85rem;
+  margin: 0 16px 16px 16px;
+  border-radius: 6px;
+
+  svg {
+    color: var(--color-error, #ef4444) !important;
+    flex-shrink: 0;
+  }
+}
+
+.loadingText {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  margin-left: 8px;
+  font-style: italic;
 }
 
 .inputArea {

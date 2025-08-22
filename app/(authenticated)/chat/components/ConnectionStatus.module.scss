@@ -1,0 +1,68 @@
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  span {
+    white-space: nowrap;
+  }
+
+  &.connected {
+    background: var(--color-success-background, #f0fdf4);
+    color: var(--color-success, #16a34a);
+    border: 1px solid var(--color-success-border, #bbf7d0);
+
+    svg {
+      color: var(--color-success, #16a34a) !important;
+    }
+  }
+
+  &.connecting {
+    background: var(--color-warning-background, #fffbeb);
+    color: var(--color-warning, #d97706);
+    border: 1px solid var(--color-warning-border, #fed7aa);
+
+    svg {
+      color: var(--color-warning, #d97706) !important;
+    }
+  }
+
+  &.error,
+  &.offline {
+    background: var(--color-error-background, #fef2f2);
+    color: var(--color-error, #dc2626);
+    border: 1px solid var(--color-error-border, #fecaca);
+
+    svg {
+      color: var(--color-error, #dc2626) !important;
+    }
+  }
+
+  &.offline {
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border-primary);
+
+    svg {
+      color: var(--color-text-secondary) !important;
+    }
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

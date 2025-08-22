@@ -45,6 +45,8 @@ interface MessagesStore {
     update: (key: keyof AssignmentData, value: any) => void;
     addChatMessage: (message: ChatMessage) => void;
     setChatMessages: (messages: ChatMessage[]) => void;
+    resetChat: () => void;
+    setAssignmentId: (id: number) => void;
 }
 
 export const useMessagesStore = create<MessagesStore>((set) => ({
@@ -81,5 +83,16 @@ export const useMessagesStore = create<MessagesStore>((set) => ({
     })),
     setChatMessages: (messages) => set((state) => ({
         value: { ...state.value, chat_messages: messages }
+    })),
+    resetChat: () => set((state) => ({
+        value: {
+            ...state.value,
+            chat_messages: [],
+            generated_content: null,
+            has_generated_content: false
+        }
+    })),
+    setAssignmentId: (id) => set((state) => ({
+        value: { ...state.value, assignmentId: id }
     })),
 }));

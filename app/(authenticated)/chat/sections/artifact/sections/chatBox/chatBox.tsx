@@ -1,9 +1,12 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, MessageSquare, Bot, User } from 'lucide-react'
+import { Send, MessageSquare, Bot, User, AlertCircle } from 'lucide-react'
 import { Artifact } from '../../../../store/chatStore'
 import { useMessagesStore } from '../../../chatMessages/store/store'
+import { useAssignmentChat } from '@/app/(authenticated)/chat/hooks/useAssignmentChat'
+import { useSearchParams } from 'next/navigation'
+import ConnectionStatus from '@/app/(authenticated)/chat/components/ConnectionStatus'
 import styles from './chatBox.module.scss'
 
 interface ChatBoxProps {
@@ -12,9 +15,13 @@ interface ChatBoxProps {
 }
 
 const ChatBox: React.FC<ChatBoxProps> = ({ artifact, onDocumentUpdate }) => {
+  const searchParams = useSearchParams()
+  const assignmentId = parseInt(searchParams.get('id') || '0')
+  
   const { value, addChatMessage } = useMessagesStore()
+  const { messages, isLoading, error, sendMessage } = useAssignmentChat(assignmentId)
+  
   const [inputValue, setInputValue] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const initializedArtifacts = useRef<Set<string>>(new Set())
@@ -24,7 +31,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ artifact, onDocumentUpdate }) => {
     const artifactWelcomeId = `welcome-${artifact.id}`
     const hasWelcomeForThisArtifact = value.chat_messages.some(msg => msg.id === artifactWelcomeId)
 
-    if (!hasWelcomeForThisArtifact && !initializedArtifacts.current.has(artifact.id)) {
+    if (!hasWelcomeForThisArtifact && !initializedArtifacts.current.has(artifact.id) && value.chat_messages.length === 0) {
       const welcomeMessage = {
         id: artifactWelcomeId,
         type: 'assistant' as const,
@@ -35,32 +42,26 @@ const ChatBox: React.FC<ChatBoxProps> = ({ artifact, onDocumentUpdate }) => {
       addChatMessage(welcomeMessage)
       initializedArtifacts.current.add(artifact.id)
     }
-  }, [artifact.id, artifact.title, addChatMessage])
+  }, [artifact.id, artifact.title, addChatMessage, value.chat_messages.length])
 
   // Auto-scroll to bottom when new messages are added
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [value.chat_messages])
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return
-
-    const userMessage = {
-      id: Date.now().toString(),
-      type: 'user' as const,
-      content: inputValue.trim(),
-      timestamp: new Date().toISOString()
+  // Handle document updates from the chat system
+  useEffect(() => {
+    if (onDocumentUpdate && value.generated_content?.content) {
+      onDocumentUpdate(value.generated_content.content)
     }
+  }, [value.generated_content?.content, onDocumentUpdate])
 
-    addChatMessage(userMessage)
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || isLoading || !assignmentId) return
+
+    // Send message through socket
+    sendMessage(inputValue.trim())
     setInputValue('')
-    setIsLoading(true)
-
-    // TODO: Integrate with actual AI service
-    // For now, just stop loading after user sends message
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 500)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -78,7 +79,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({ artifact, onDocumentUpdate }) => {
           <MessageSquare size={20} />
         </div>
         <div className={styles.headerTitle}>
-          <h3>Document Chat</h3>
+          <div className={styles.titleRow}>
+            <h3>Document Chat</h3>
+            <ConnectionStatus />
+          </div>
           <p>
             Chat about: <abbr title={artifact.title}>
               {`${artifact.title.slice(0, 30)}...`}
@@ -86,6 +90,14 @@ const ChatBox: React.FC<ChatBoxProps> = ({ artifact, onDocumentUpdate }) => {
           </p>
         </div>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className={styles.errorBanner}>
+          <AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Messages Area */}
       <div className={styles.messagesArea}>
@@ -123,6 +135,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ artifact, onDocumentUpdate }) => {
                 <span></span>
                 <span></span>
               </div>
+              <span className={styles.loadingText}>AI is thinking...</span>
             </div>
           </div>
         )}
@@ -139,13 +152,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({ artifact, onDocumentUpdate }) => {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask me to modify the document..."
+            placeholder={assignmentId ? "Ask me to modify the document..." : "Loading assignment..."}
             className={styles.input}
-            disabled={isLoading}
+            disabled={isLoading || !assignmentId}
           />
           <button
             onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
+            disabled={!inputValue.trim() || isLoading || !assignmentId}
             className={styles.sendButton}
           >
             <Send size={18} />
