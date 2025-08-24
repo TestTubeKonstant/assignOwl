@@ -32,6 +32,7 @@ interface ChatErrorData {
     assignmentId: number
     error: string
     timestamp: string
+    
 }
 
 export const useAssignmentChat = (assignmentId: number) => {
