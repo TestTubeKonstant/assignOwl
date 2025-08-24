@@ -127,7 +127,21 @@ export const useAssignmentChat = (assignmentId: number) => {
             try {
                 const response = await chatApi.getChatHistory(assignmentId, limit)
                 if (response.success) {
-                    update('chat_messages', response.messages)
+                    console.log('REST API chat history:', response.messages)
+
+                    // Map REST API response (should already be correct format, but let's be safe)
+                    const mappedMessages: ChatMessage[] = response.messages.map((msg: any) => ({
+                        id: msg.id,
+                        type: msg.sender_type ? (msg.sender_type === 'user' ? 'user' : 'assistant') :
+                            msg.sender ? (msg.sender === 'user' ? 'user' : 'assistant') :
+                                msg.type, // Handle sender_type, sender, or type formats
+                        content: msg.content,
+                        timestamp: msg.created_at || msg.timestamp,
+                        responseType: msg.responseType
+                    }))
+
+                    console.log('Mapped REST API messages:', mappedMessages)
+                    update('chat_messages', mappedMessages)
                 } else if (response.error) {
                     setError(response.error)
                 }
@@ -211,11 +225,24 @@ export const useAssignmentChat = (assignmentId: number) => {
         }
 
         // Handle chat history response
-        const handleChatHistory = (data: { assignmentId: number; messages: ChatMessage[]; timestamp: string }) => {
+        const handleChatHistory = (data: { assignmentId: number; messages: any[]; timestamp: string }) => {
             if (data.assignmentId !== assignmentId) return
 
+            console.log('Raw chat history from socket:', data.messages)
+
+            // Map socket message format to frontend format
+            const mappedMessages: ChatMessage[] = data.messages.map((msg: any) => ({
+                id: msg.id,
+                type: msg.sender_type === 'user' ? 'user' : 'assistant', // Map sender_type to type
+                content: msg.content,
+                timestamp: msg.created_at || msg.timestamp, // Use created_at from server
+                responseType: msg.responseType || (msg.sender_type === 'ai' ? 'text' : undefined)
+            }))
+
+            console.log('Mapped chat messages:', mappedMessages)
+
             // Replace current chat messages with history
-            update('chat_messages', data.messages)
+            update('chat_messages', mappedMessages)
         }
 
         // Handle current generation response
