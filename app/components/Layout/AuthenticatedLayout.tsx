@@ -6,6 +6,7 @@ import Sidebar from '../Sidebar/Sidebar'
 import ProfileDropdown from '../ProfileDropdown/ProfileDropdown'
 import { ThemeProvider } from '@/app/contexts/ThemeContext'
 import styles from './AuthenticatedLayout.module.scss'
+import HomeScreen from '@/app/(authenticated)/chat/components/HomeScreen'
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode
@@ -113,6 +114,7 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({ children }) =
         
         <main className={`${styles.main} ${isSidebarCollapsed ? styles.expanded : ''} ${isMobile ? styles.withMobileHeader : ''}`}>
           <div className={styles.content}>
+            <HomeScreen/>
             {children}
           </div>
         </main>
